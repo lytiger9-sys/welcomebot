@@ -68,7 +68,7 @@ client.on('interactionCreate', async (interaction) => {
 // 신규 멤버 입장 시 DM 발송 로직
 client.on('guildMemberAdd', async (member) => {
     const filePath = './config.json';
-    
+
     // 설정 파일이 없으면 중단
     if (!fs.existsSync(filePath)) return;
 
@@ -82,9 +82,9 @@ client.on('guildMemberAdd', async (member) => {
         // 임베드 디자인 (검은색 테두리 + 서버 이름 + 메시지 + 선택적 GIF)
         const welcomeEmbed = new EmbedBuilder()
             .setColor(0x000000) // 검은색 테두리
-            .setAuthor({ 
-                name: member.guild.name, 
-                iconURL: member.guild.iconURL() || null 
+            .setAuthor({
+                name: member.guild.name,
+                iconURL: member.guild.iconURL() || null
             }) // 상단 굵은 흰색 글씨 효과
             .setDescription(config.message.replace('{user}', `<@${member.id}>`).replace(/\\n/g, '\n')) // 소개글 (흰색 작은 글씨)
             .setTimestamp();
@@ -100,7 +100,7 @@ client.on('guildMemberAdd', async (member) => {
 
     } catch (err) {
         console.log(`[실패] ${member.user.tag}님이 DM을 차단했거나 오류가 발생했습니다.`);
-        
+
         // DM 실패 시 관리자가 설정한 로그 채널로 알림 전송
         const logChannel = member.guild.channels.cache.get(config.logChannelId);
         if (logChannel) {
@@ -138,11 +138,19 @@ client.on('guildMemberAdd', async (member) => {
                 inviterTag = '정보를 가져올 수 없음 (권한 부족 등)';
             }
 
+            function getRandomItem(array) {
+                const index = Math.floor(Math.random() * array.length);
+                return array[index];
+            }
+            let emoji = ["<:__1:1509339194525483109>", "<:__2:1509339192512221264>", "<:__3:1509339190809202698>", "<:__4:1509339188997263480>", "<:__5:1509339133821059152>", "<:__6:1509339131916849275>", "<:__7:1509339130088132738>", "<:__8:1509339128112742410>", "<:__9:1509339126309195856>", "<:__10:1509339122974593104>", "<:__11:1509339121083089057>", "<:__12:1509339119321481288>", "<:__13:1509339117341900841>"]
+            const randomEmoji = getRandomItem(emoji);
+
+            //입장 로그 임베드
             const joinLogEmbed = new EmbedBuilder()
                 .setColor(0x00FF00) // 초록색 테두리
                 .setTitle('새로운 멤버가 입장했습니다!')
                 .setDescription(
-                    `**멤버:** ${member.user.tag} (<@${member.id}>)\n` +
+                    `**멤버:** ${member.user.tag} (<@${member.id}>) ${randomEmoji}\n` +
                     `**초대자:** ${inviterTag}\n` +
                     `**현재 서버 인원:** ${member.guild.memberCount}명`
                 )
