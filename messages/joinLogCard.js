@@ -1,7 +1,5 @@
 const {
     ContainerBuilder,
-    MediaGalleryBuilder,
-    MediaGalleryItemBuilder,
     MessageFlags,
     SectionBuilder,
     SeparatorBuilder,
@@ -9,9 +7,9 @@ const {
     ThumbnailBuilder,
 } = require('discord.js');
 
-function buildJoinLogCard({ member, inviterTag, randomEmoji, gifUrl }) {
+function buildJoinLogCard({ member, inviterTag, randomEmoji }) {
     const detailsText = [
-        `**멤버:** ${member.user.tag} (${member.id}) ${randomEmoji}`,
+        `**멤버:** ${member.user.tag} (<@${member.id}>) ${randomEmoji}`,
         `**초대자:** ${inviterTag}`,
         `**현재 서버 인원:** ${member.guild.memberCount}명`,
     ].join('\n');
@@ -35,20 +33,6 @@ function buildJoinLogCard({ member, inviterTag, randomEmoji, gifUrl }) {
             new SeparatorBuilder().setDivider(true)
         )
         .addSectionComponents(summarySection);
-
-    if (gifUrl) {
-        container
-            .addSeparatorComponents(
-                new SeparatorBuilder().setDivider(true)
-            )
-            .addMediaGalleryComponents(
-                new MediaGalleryBuilder().addItems(
-                    new MediaGalleryItemBuilder()
-                        .setURL(gifUrl)
-                        .setDescription(`${member.guild.name} 환영 이미지`)
-                )
-            );
-    }
 
     return {
         components: [container],

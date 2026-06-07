@@ -160,7 +160,6 @@ client.on('guildMemberAdd', async (member) => {
                 member,
                 inviterTag,
                 randomEmoji,
-                gifUrl: config.gif,
             }));
             console.log(`[성공] ${member.user.tag}님의 입장 로그를 전송했습니다.`);
         }
