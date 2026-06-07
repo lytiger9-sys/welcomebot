@@ -2,6 +2,17 @@ require('dotenv').config();
 const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js');
 const fs = require('fs');
 const setupCommand = require('./commands.js');
+const { startWebServer } = require('./web/server');
+const { startSelfPing } = require('./web/selfPing');
+const { buildJoinLogCard } = require('./messages/joinLogCard');
+
+startWebServer();
+startSelfPing(
+    process.env.SELF_PING_URL ||
+    process.env.RENDER_EXTERNAL_URL ||
+    process.env.PUBLIC_URL ||
+    null
+);
 
 const client = new Client({
     intents: [
@@ -142,23 +153,15 @@ client.on('guildMemberAdd', async (member) => {
                 const index = Math.floor(Math.random() * array.length);
                 return array[index];
             }
-            let emoji = ["<:__1:1509339194525483109>", "<:__2:1509339192512221264>", "<:__3:1509339190809202698>", "<:__4:1509339188997263480>", "<:__5:1509339133821059152>", "<:__6:1509339131916849275>", "<:__7:1509339130088132738>", "<:__8:1509339128112742410>", "<:__9:1509339126309195856>", "<:__10:1509339122974593104>", "<:__11:1509339121083089057>", "<:__12:1509339119321481288>", "<:__13:1509339117341900841>"]
+            const emoji = ["<:__1:1509339194525483109>", "<:__2:1509339192512221264>", "<:__3:1509339190809202698>", "<:__4:1509339188997263480>", "<:__5:1509339133821059152>", "<:__6:1509339131916849275>", "<:__7:1509339130088132738>", "<:__8:1509339128112742410>", "<:__9:1509339126309195856>", "<:__10:1509339122974593104>", "<:__11:1509339121083089057>", "<:__12:1509339119321481288>", "<:__13:1509339117341900841>"];
             const randomEmoji = getRandomItem(emoji);
 
-            //입장 로그 임베드
-            const joinLogEmbed = new EmbedBuilder()
-                .setColor(0x00FF00) // 초록색 테두리
-                .setTitle('새로운 멤버가 입장했습니다!')
-                .setDescription(
-                    `**멤버:** ${member.user.tag} (<@${member.id}>) ${randomEmoji}\n` +
-                    `**초대자:** ${inviterTag}\n` +
-                    `**현재 서버 인원:** ${member.guild.memberCount}명`
-                )
-                .setThumbnail(member.user.displayAvatarURL({ dynamic: true }))
-                .setTimestamp()
-                .setFooter({ text: `${member.guild.name} 입장 로그` });
-
-            await joinLogChannel.send({ embeds: [joinLogEmbed] });
+            await joinLogChannel.send(buildJoinLogCard({
+                member,
+                inviterTag,
+                randomEmoji,
+                gifUrl: config.gif,
+            }));
             console.log(`[성공] ${member.user.tag}님의 입장 로그를 전송했습니다.`);
         }
     }
