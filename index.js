@@ -1,7 +1,10 @@
 require('dotenv').config();
 const { Client, GatewayIntentBits, EmbedBuilder } = require('discord.js');
-const fs = require('fs');
 const setupCommand = require('./commands.js');
+const { getGuildConfig } = require('./utils/configStore');
+const { renderWelcomeMessage } = require('./welcome/messageRenderer');
+const { handleWelcomeSetupSubmit } = require('./welcome/setupSubmit');
+const { WELCOME_SETUP_MODAL_ID } = require('./welcome/setupModal');
 const { startWebServer } = require('./web/server');
 const { startSelfPing } = require('./web/selfPing');
 const { buildJoinLogCard } = require('./messages/joinLogCard');
@@ -69,22 +72,32 @@ client.on('inviteDelete', invite => {
 
 // 명령어 실행 핸들링
 client.on('interactionCreate', async (interaction) => {
-    if (!interaction.isChatInputCommand()) return;
+    try {
+        if (interaction.isChatInputCommand()) {
+            if (interaction.commandName === '환영합니다') {
+                await setupCommand.execute(interaction);
+            }
+            return;
+        }
 
-    if (interaction.commandName === '환영합니다') {
-        await setupCommand.execute(interaction);
+        if (interaction.isModalSubmit() && interaction.customId === WELCOME_SETUP_MODAL_ID) {
+            await handleWelcomeSetupSubmit(interaction);
+        }
+    } catch (error) {
+        console.error('[interactionCreate] 처리 중 오류 발생:', error);
+
+        if (interaction.isRepliable() && !interaction.replied && !interaction.deferred) {
+            await interaction.reply({
+                content: '처리 중 오류가 발생했습니다. 다시 시도해 주세요.',
+                ephemeral: true,
+            }).catch(() => null);
+        }
     }
 });
 
 // 신규 멤버 입장 시 DM 발송 로직
 client.on('guildMemberAdd', async (member) => {
-    const filePath = './config.json';
-
-    // 설정 파일이 없으면 중단
-    if (!fs.existsSync(filePath)) return;
-
-    const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-    const config = data[member.guild.id];
+    const config = getGuildConfig(member.guild.id);
 
     // 해당 서버의 설정이 없으면 중단
     if (!config) return;
@@ -97,7 +110,7 @@ client.on('guildMemberAdd', async (member) => {
                 name: member.guild.name,
                 iconURL: member.guild.iconURL() || null
             }) // 상단 굵은 흰색 글씨 효과
-            .setDescription(config.message.replace('{user}', `<@${member.id}>`).replace(/\\n/g, '\n')) // 소개글 (흰색 작은 글씨)
+            .setDescription(renderWelcomeMessage(config.message, member)) // 소개글 (흰색 작은 글씨)
             .setTimestamp();
 
         // 관리자가 GIF를 등록했을 경우에만 이미지 추가
